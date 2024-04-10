@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:pytorch_lite/pytorch_lite.dart';
 import 'package:pytorch_poc/pytorch.dart';
 import 'package:talker/talker.dart';
 
@@ -9,12 +8,14 @@ class TiledBoxesOnImage extends StatelessWidget {
   final Talker talker;
   final File img;
   final List<OutputSlicing?>? outputSlicing;
+  final List<String>? labels;
 
   const TiledBoxesOnImage({
     super.key,
     required this.talker,
     required this.img,
     this.outputSlicing,
+    this.labels,
   });
 
   @override
@@ -35,7 +36,13 @@ class TiledBoxesOnImage extends StatelessWidget {
             ),
             if (outputSlicing != null)
               for (var output in outputSlicing!)
-                ...renderBoxes(talker, factorX, factorY, output)
+                ...renderBoxes(
+                  talker,
+                  factorX,
+                  factorY,
+                  output,
+                  labels,
+                )
           ],
         );
       },
@@ -48,6 +55,7 @@ List<Widget> renderBoxes(
   double factorX,
   double factorY,
   OutputSlicing? output,
+  List<String>? labels,
 ) {
   // final widthScale = output.imgWidth / output.tileWidth;
   // final heightScale = output.imgHeight / output.tileHeight;
@@ -101,7 +109,7 @@ List<Widget> renderBoxes(
             alignment: Alignment.centerRight,
             color: Colors.red,
             child: Text(
-              "${re.className ?? re.classIndex.toString()}_${(re.score * 100).toStringAsFixed(2)}%",
+              "${labels?[re.classIndex] ?? re.classIndex.toString()}_${(re.score * 100).toStringAsFixed(2)}%",
             ),
           ),
           Container(

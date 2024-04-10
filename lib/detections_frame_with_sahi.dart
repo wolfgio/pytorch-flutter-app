@@ -38,6 +38,7 @@ class DetectionsFrameWithSAHI extends StatelessWidget {
             talker: talker,
             img: output!.file,
             outputSlicing: output?.outputSlicing,
+            labels: labels,
           ),
         ),
         Expanded(
