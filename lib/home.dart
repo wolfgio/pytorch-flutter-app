@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:pytorch_lite/pytorch_lite.dart';
 import 'package:pytorch_poc/detections_frame_slices.dart';
+import 'package:pytorch_poc/detections_frame_with_sahi.dart';
 import 'package:pytorch_poc/detections_frame_without_sahi.dart';
 import 'package:pytorch_poc/pytorch.dart';
 import 'package:talker/talker.dart';
@@ -183,7 +184,11 @@ class _HomeScreenState extends State<HomeScreen> {
               child: TabBarView(
                 children: [
                   DetectionsFrameWithoutSAHI(output: _output, labels: _labels),
-                  const SizedBox.shrink(),
+                  DetectionsFrameWithSAHI(
+                    talker: widget.talker,
+                    output: _output,
+                    labels: _labels,
+                  ),
                   DetectionsFrameSlices(output: _output, labels: _labels),
                 ],
               ),

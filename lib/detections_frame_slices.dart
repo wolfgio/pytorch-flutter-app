@@ -23,14 +23,14 @@ class DetectionsFrameSlices extends StatelessWidget {
                   ),
                   width: double.infinity,
                   height: 320,
-                  child: output!.model.renderBoxesOnImage(
+                  child: output?.model.renderBoxesOnImage(
                     outputSlicing!.slice.file,
                     outputSlicing.detections,
                   ),
                 ),
                 Expanded(
                   child: ListView(
-                    children: outputSlicing.detections
+                    children: outputSlicing!.detections
                         .map(
                           (detection) => Card(
                             margin: const EdgeInsets.all(16),

@@ -33,17 +33,26 @@ class OutuputWithoutSlicing {
 class OutputSlicing {
   final List<ResultObjectDetection> detections;
   final Slice slice;
+  final int imgWidth;
+  final int imgHeight;
 
-  const OutputSlicing({required this.detections, required this.slice});
+  const OutputSlicing({
+    required this.detections,
+    required this.slice,
+    required this.imgWidth,
+    required this.imgHeight,
+  });
 }
 
 class Output {
   final ModelObjectDetection model;
+  final File file;
   final OutuputWithoutSlicing outuputWithoutSlicing;
   final List<OutputSlicing?> outputSlicing;
 
   const Output({
     required this.model,
+    required this.file,
     required this.outuputWithoutSlicing,
     required this.outputSlicing,
   });
@@ -58,18 +67,22 @@ Future<Slice> createImageSlice({
   required List<int> coordinates,
   required String tempDir,
   required Talker talker,
+  required int sliceWidth,
+  required int sliceHeight,
 }) async {
-  final left = coordinates[0];
-  final top = coordinates[1];
-  final right = coordinates[2];
-  final bottom = coordinates[3];
+  final xmin = coordinates[0];
+  final ymin = coordinates[1];
+  final xmax = coordinates[2];
+  final ymax = coordinates[3];
+
   final date = DateTime.now().toIso8601String();
-  final imgPath = '$tempDir/image_slices/slice_${date}_${left}_$top.png';
+  final imgPath = '$tempDir/image_slices/slice_${date}_${xmin}_$ymin.png';
+
+  talker.debug("coordinates $coordinates");
 
   final cmd = (image_api.Command()
     ..image(img)
-    ..copyCrop(x: left, y: top, width: (right - left), height: (bottom - top))
-    // ..copyResize(width: 640, height: 640)
+    ..copyCrop(x: xmin, y: ymin, width: sliceWidth, height: sliceHeight)
     ..copyExpandCanvas(
       newWidth: 640,
       newHeight: 640,
@@ -126,20 +139,38 @@ Future<List<OutputSlicing?>> runSlicing({
               coordinates: [xmin, ymin, xmax, ymax],
               tempDir: tempDir,
               talker: talker,
+              sliceWidth: sliceWidth,
+              sliceHeight: sliceHeight,
             );
 
             final detections = await model.getImagePredictionList(slice.bytes);
-            outputs.add(OutputSlicing(detections: detections, slice: slice));
+            outputs.add(
+              OutputSlicing(
+                detections: detections,
+                slice: slice,
+                imgWidth: imgWidth,
+                imgHeight: imgHeight,
+              ),
+            );
           } else {
             final slice = await createImageSlice(
               img: img,
               coordinates: [xMin, yMin, xMax, yMax],
               tempDir: tempDir,
               talker: talker,
+              sliceWidth: sliceWidth,
+              sliceHeight: sliceHeight,
             );
 
             final detections = await model.getImagePredictionList(slice.bytes);
-            outputs.add(OutputSlicing(detections: detections, slice: slice));
+            outputs.add(
+              OutputSlicing(
+                detections: detections,
+                slice: slice,
+                imgWidth: imgWidth,
+                imgHeight: imgHeight,
+              ),
+            );
           }
           xMin = xMax - xOverlap;
         }
@@ -215,6 +246,7 @@ Future<Output?> runInfereces({
 
       return Output(
         model: model,
+        file: File(xFile.path),
         outputSlicing: outputSlicing,
         outuputWithoutSlicing: OutuputWithoutSlicing(
           detections: outputWithoutSAHI,

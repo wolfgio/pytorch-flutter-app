@@ -1,147 +1,120 @@
-// import 'package:flutter/material.dart';
-// import 'package:pytorch_poc/pytorch.dart';
-// import 'package:talker/talker.dart';
+import 'dart:io';
 
-// class TiledBoxesOnImage extends StatelessWidget {
-//   final Talker talker;
-//   final TiledResult result;
+import 'package:flutter/material.dart';
+import 'package:pytorch_lite/pytorch_lite.dart';
+import 'package:pytorch_poc/pytorch.dart';
+import 'package:talker/talker.dart';
 
-//   const TiledBoxesOnImage({
-//     super.key,
-//     required this.talker,
-//     required this.result,
-//   });
+class TiledBoxesOnImage extends StatelessWidget {
+  final Talker talker;
+  final File img;
+  final List<OutputSlicing?>? outputSlicing;
 
-//   @override
-//   Widget build(BuildContext context) {
-//     return LayoutBuilder(
-//       builder: (context, constraints) {
-//         double factorX = constraints.maxWidth;
-//         double factorY = constraints.maxHeight;
+  const TiledBoxesOnImage({
+    super.key,
+    required this.talker,
+    required this.img,
+    this.outputSlicing,
+  });
 
-//         return Stack(
-//           children: [
-//             Positioned(
-//               left: 0,
-//               top: 0,
-//               width: factorX,
-//               height: factorY,
-//               child: Image.file(result.img),
-//             ),
-//             for (var output in result.outputs)
-//               ...renderBoxes(talker, factorX, factorY, output)
-//           ],
-//         );
-//       },
-//     );
-//   }
-// }
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        double factorX = constraints.maxWidth;
+        double factorY = constraints.maxHeight;
 
-// List<Widget> renderBoxes(
-//     Talker talker, double factorX, double factorY, TiledOutput output) {
-//   final widthScale = output.imgWidth / output.tileWidth;
-//   final heightScale = output.imgHeight / output.tileHeight;
+        return Stack(
+          children: [
+            Positioned(
+              left: 0,
+              top: 0,
+              width: factorX,
+              height: factorY,
+              child: Image.file(img, fit: BoxFit.fill),
+            ),
+            if (outputSlicing != null)
+              for (var output in outputSlicing!)
+                ...renderBoxes(talker, factorX, factorY, output)
+          ],
+        );
+      },
+    );
+  }
+}
 
-//   return output.detections.map<Widget>((re) {
-//     final rectLeft = re.rect.left;
-//     final rectTop = re.rect.top;
-//     final rectRight = re.rect.right;
-//     final rectBottom = re.rect.bottom;
-//     final rectWidth = re.rect.width;
-//     final rectHeight = re.rect.height;
+List<Widget> renderBoxes(
+  Talker talker,
+  double factorX,
+  double factorY,
+  OutputSlicing? output,
+) {
+  // final widthScale = output.imgWidth / output.tileWidth;
+  // final heightScale = output.imgHeight / output.tileHeight;
 
-//     final scaledLeft = rectLeft * widthScale;
-//     final scaledTop = rectTop * heightScale;
-//     final scaledRight = rectRight * widthScale;
-//     final scaledBottom = rectBottom * heightScale;
-//     final scaledWidth = rectWidth * widthScale;
-//     final scaledHeight = rectHeight * heightScale;
+  if (output == null) {
+    return [const SizedBox.shrink()];
+  }
 
-//     final standardLeft = rectLeft * factorX;
-//     final standardTop = rectTop * factorY;
-//     final standardWidth = rectWidth.toDouble() * factorX;
-//     final standardHeight = rectHeight.toDouble() * factorY;
+  final x = output.slice.coordinates[0];
+  final y = output.slice.coordinates[1];
+  final imgWidth = output.imgWidth;
+  final imgHeight = output.imgHeight;
 
-//     final tiledLeft = (rectLeft * factorX) * scaledWidth;
-//     final tiledTop = (rectTop * factorY) * scaledHeight;
-//     final tiledWidth = (scaledWidth * factorX).toDouble() / widthScale;
-//     final tiledHeight = (scaledHeight * factorY).toDouble() / heightScale;
+  return output.detections.map<Widget>((re) {
+    final pLeft = (x + re.rect.left * 640) / imgWidth;
+    final pTop = (y + re.rect.top * 640) / imgHeight;
+    final pRight = (x + re.rect.right * 640) / imgWidth;
+    final pBottom = (y + re.rect.bottom * 640) / imgHeight;
 
-//     talker.debug("""
+    talker.debug("""
+      
+      x  $x
+      y  $y
 
+      ============ img ============
 
-//       factor_x: $factorX, factor_y: $factorY
-//       img_width: ${output.imgWidth}, img_height: ${output.imgHeight}
-//       tile_width: ${output.tileWidth}, tile_height: ${output.tileHeight}
+      width  ${output.imgWidth}
+      height ${output.imgHeight}
 
-//       x: ${output.x}, y: ${output.y}
+      ============ points ============
 
-//       ===================
+      left ${re.rect.left}
+      top  ${re.rect.top}
 
-//       score: ${output.detections.map((e) => e.score).toString()}
+      ============ final ============
 
-//       ===================
+      left ${pLeft * factorX}
+      top  ${pTop * factorY - 20}
+    """);
 
-//       width_scale: $widthScale, height_scale: $heightScale
-
-//       ===================
-
-//       detection
-//         left: $rectLeft
-//         top: $rectTop
-//         right: $rectRight
-//         bottom: $rectBottom
-//         width: $rectWidth
-//         height: $rectHeight
-
-//       scaled
-//         left: $scaledLeft
-//         top: $scaledTop
-//         right: $scaledRight
-//         bottom: $scaledBottom
-//         width: $scaledWidth
-//         height: $scaledHeight
-
-//       full-image-position-without-scale
-//         left: $standardLeft
-//         top: $standardTop
-//         width: $standardWidth
-//         height: $standardHeight
-
-//       full-image-position-with-scale
-//         left: $tiledLeft
-//         top: $tiledTop
-//         width: $tiledWidth
-//         height: $tiledHeight
-//     """);
-
-//     return Positioned(
-//       left: standardLeft,
-//       top: standardTop - 20,
-//       child: Column(
-//         mainAxisSize: MainAxisSize.min,
-//         mainAxisAlignment: MainAxisAlignment.start,
-//         crossAxisAlignment: CrossAxisAlignment.start,
-//         children: [
-//           Container(
-//             height: 20,
-//             alignment: Alignment.centerRight,
-//             color: Colors.red,
-//             child: Text(
-//               "${re.className ?? re.classIndex.toString()}_${(re.score * 100).toStringAsFixed(2)}%",
-//             ),
-//           ),
-//           Container(
-//             width: standardWidth,
-//             height: standardHeight,
-//             decoration: BoxDecoration(
-//               border: Border.all(color: Colors.red, width: 3),
-//               borderRadius: const BorderRadius.all(Radius.circular(2)),
-//             ),
-//             child: Container(),
-//           ),
-//         ],
-//       ),
-//     );
-//   }).toList();
-// }
+    return Positioned(
+      left: pLeft * factorX,
+      top: pTop * factorY - 20,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            height: 20,
+            alignment: Alignment.centerRight,
+            color: Colors.red,
+            child: Text(
+              "${re.className ?? re.classIndex.toString()}_${(re.score * 100).toStringAsFixed(2)}%",
+            ),
+          ),
+          Container(
+            width: (pRight - pLeft) * factorX,
+            height: (pBottom - pTop) * factorY,
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.red, width: 3),
+              borderRadius: const BorderRadius.all(Radius.circular(2)),
+            ),
+            child: Container(),
+          ),
+        ],
+      ),
+    );
+  }).toList();
+}
