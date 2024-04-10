@@ -72,8 +72,8 @@ Future<Slice> createImageSlice({
 }) async {
   final xmin = coordinates[0];
   final ymin = coordinates[1];
-  final xmax = coordinates[2];
-  final ymax = coordinates[3];
+  // final xmax = coordinates[2];
+  // final ymax = coordinates[3];
 
   final date = DateTime.now().toIso8601String();
   final imgPath = '$tempDir/image_slices/slice_${date}_${xmin}_$ymin.png';
