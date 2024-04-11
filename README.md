@@ -3,9 +3,9 @@
 Sample App That Uses Pytorch To Detect Object In Images
 
 <div>
-  <img src="assets/samples/detections/hotdogs.png" width="300px" />
-  <img src="assets/samples/detections/people.png" width="300px" />
-  <img src="assets/samples/detections/zebra.png" width="300px" />
+  <img src="assets/samples/detections/hotdogs.png" width="200px" />
+  <img src="assets/samples/detections/people.png" width="200px" />
+  <img src="assets/samples/detections/zebra.png" width="200px" />
 </div>
 
 ## Getting Started
